@@ -18,127 +18,147 @@ This system must support:
 
 ## Javascript code:
 ```
-class User {
-  constructor(id, name, email) {
-    if (new.target === User) {
-      throw new Error("Cannot instantiate abstract class 'User'");
+abstract class User {
+    protected int id;
+    protected String name;
+    protected String email;
+
+    public User(int id, String name, String email) {
+        if (this.getClass() == User.class) {
+            throw new RuntimeException("Cannot instantiate abstract class 'User'");
+        }
+        this.id = id;
+        this.name = name;
+        this.email = email;
     }
-    this.id = id;
-    this.name = name;
-    this.email = email;
-  }
 
-  login() {
-    console.log(`${this.name} logged in.`);
-  }
+    public abstract void login();
 
-  viewCourses(courses) {
-    console.log(`${this.name}'s Courses:`);
-    courses.forEach(course => console.log(`- ${course.title}`));
-  }
+    public void viewCourses(java.util.List<Course> courses) {
+        System.out.println(name + "'s Courses:");
+        for (Course course : courses) {
+            System.out.println("- " + course.title);
+        }
+    }
 }
 
 class Student extends User {
-  constructor(id, name, email) {
-    super(id, name, email);
-    this.enrolledCourses = [];
-  }
+    public java.util.List<Course> enrolledCourses = new java.util.ArrayList<>();
 
-  login() {
-    console.log(`Student ${this.name} logged in.`);
-  }
+    public Student(int id, String name, String email) {
+        super(id, name, email);
+    }
 
-  uploadAssignment(assignment, content) {
-    assignment.submission = content;
-    console.log(`${this.name} uploaded assignment: ${assignment.title}`);
-  }
+    @Override
+    public void login() {
+        System.out.println("Student " + name + " logged in.");
+    }
 
-  viewGrades() {
-    this.enrolledCourses.forEach(course => {
-      course.assignments.forEach(a => {
-        console.log(`Course: ${course.title} - Assignment: ${a.title} - Grade: ${a.grade?.score ?? 'Not graded'}`);
-      });
-    });
-  }
+    public void uploadAssignment(Assignment assignment, String content) {
+        assignment.submission = content;
+        System.out.println(name + " uploaded assignment: " + assignment.title);
+    }
+
+    public void viewGrades() {
+        for (Course course : enrolledCourses) {
+            for (Assignment a : course.assignments) {
+                String gradeStr = (a.grade != null) ? String.valueOf(a.grade.score) : "Not graded";
+                System.out.println("Course: " + course.title + " - Assignment: " + a.title + " - Grade: " + gradeStr);
+            }
+        }
+    }
 }
 
 class Instructor extends User {
-  constructor(id, name, email) {
-    super(id, name, email);
-    this.createdCourses = [];
-  }
+    public java.util.List<Course> createdCourses = new java.util.ArrayList<>();
 
-  login() {
-    console.log(`Instructor ${this.name} logged in.`);
-  }
+    public Instructor(int id, String name, String email) {
+        super(id, name, email);
+    }
 
-  createCourse(id, title, description) {
-    const course = new Course(id, title, description, this);
-    this.createdCourses.push(course);
-    console.log(`Course created: ${title}`);
-    return course;
-  }
+    @Override
+    public void login() {
+        System.out.println("Instructor " + name + " logged in.");
+    }
 
-  gradeAssignment(assignment, score, feedback) {
-    assignment.grade = new Grade(score, feedback);
-    console.log(`Assignment '${assignment.title}' graded with score: ${score}`);
-  }
+    public Course createCourse(int id, String title, String description) {
+        Course course = new Course(id, title, description, this);
+        createdCourses.add(course);
+        System.out.println("Course created: " + title);
+        return course;
+    }
+
+    public void gradeAssignment(Assignment assignment, int score, String feedback) {
+        assignment.grade = new Grade(score, feedback);
+        System.out.println("Assignment '" + assignment.title + "' graded with score: " + score);
+    }
 }
 
 class Course {
-  constructor(id, title, description, instructor) {
-    this.id = id;
-    this.title = title;
-    this.description = description;
-    this.instructor = instructor;
-    this.students = [];
-    this.assignments = [];
-  }
+    public int id;
+    public String title;
+    public String description;
+    public Instructor instructor;
+    public java.util.List<Student> students = new java.util.ArrayList<>();
+    public java.util.List<Assignment> assignments = new java.util.ArrayList<>();
 
-  addStudent(student) {
-    this.students.push(student);
-    student.enrolledCourses.push(this);
-    console.log(`${student.name} enrolled in course: ${this.title}`);
-  }
+    public Course(int id, String title, String description, Instructor instructor) {
+        this.id = id;
+        this.title = title;
+        this.description = description;
+        this.instructor = instructor;
+    }
 
-  addAssignment(assignment) {
-    this.assignments.push(assignment);
-    console.log(`Assignment '${assignment.title}' added to course: ${this.title}`);
-  }
+    public void addStudent(Student student) {
+        students.add(student);
+        student.enrolledCourses.add(this);
+        System.out.println(student.name + " enrolled in course: " + title);
+    }
+
+    public void addAssignment(Assignment assignment) {
+        assignments.add(assignment);
+        System.out.println("Assignment '" + assignment.title + "' added to course: " + title);
+    }
 }
-
 
 class Assignment {
-  constructor(title, description) {
-    this.title = title;
-    this.description = description;
-    this.submission = null;
-    this.grade = null;
-  }
+    public String title;
+    public String description;
+    public String submission;
+    public Grade grade;
 
-  submit(content) {
-    this.submission = content;
-  }
+    public Assignment(String title, String description) {
+        this.title = title;
+        this.description = description;
+        this.submission = null;
+        this.grade = null;
+    }
 
-  getGrade() {
-    return this.grade;
-  }
+    public void submit(String content) {
+        this.submission = content;
+    }
+
+    public Grade getGrade() {
+        return grade;
+    }
 }
 
-
 class Grade {
-  constructor(score, feedback) {
-    this.score = score;
-    this.feedback = feedback;
-  }
+    public int score;
+    public String feedback;
 
-  getScore() {
-    return this.score;
-  }
+    public Grade(int score, String feedback) {
+        this.score = score;
+        this.feedback = feedback;
+    }
 
-  getFeedback() {
-    return this.feedback;
-  }
+    public int getScore() {
+        return score;
+    }
+
+    public String getFeedback() {
+        return feedback;
+    }
 }
 ```
 
